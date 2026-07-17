@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { FlaskConical, Activity } from 'lucide-react';
+import { FlaskConical, Activity, Database, Clock } from 'lucide-react';
 
 const pageTitles: Record<string, { title: string; subtitle: string; icon: React.ReactNode }> = {
   '/research': {
@@ -9,10 +9,15 @@ const pageTitles: Record<string, { title: string; subtitle: string; icon: React.
     subtitle: 'Create methods, ingest backtests, and run Monte Carlo simulations',
     icon: <FlaskConical size={20} />,
   },
+  '/research-database': {
+    title: 'Research Database',
+    subtitle: 'View papers, backtest results, and Monte Carlo runs',
+    icon: <Database size={20} />,
+  },
   '/monitor': {
-    title: 'Live Monitor',
-    subtitle: 'Compare live execution against backtested expectations',
-    icon: <Activity size={20} />,
+    title: 'Upcoming Monitor',
+    subtitle: 'Upcoming features to sync with MQL5 and monitor MetaTrader accounts',
+    icon: <Clock size={20} />,
   },
 };
 

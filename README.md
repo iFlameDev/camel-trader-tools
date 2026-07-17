@@ -1,32 +1,24 @@
-# React + TypeScript + Vite
+# Camel Trader Tools
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Camel Trader Tools is a client-side heavy SPA for quantitative trading research. It provides tools for backtesting, analyzing research databases, and managing quantitative models natively in the browser.
 
-Currently, two official plugins are available:
+## Features
+- **Research Pipeline**: Create methods, ingest and process backtests directly in the browser (via Web Workers).
+- **Research Database**: A centralized knowledge base for exploring quantitative research papers, historical backtests, and computed Monte Carlo simulation results.
+- **Client-Side Compute**: Leverages Web Workers to offload heavy computations during simulations.
+- **Supabase Backend**: Fast metadata and method storage for data persistence.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Live Monitor (Upcoming Integration)
+We are currently developing a deep integration system to natively sync with **MQL5**. 
+The **Live Monitor** feature is upcoming. Soon, you will be able to monitor live MetaTrader accounts executing strategies directly matched with methods from your Research Database. The vision is to pull live real-time equity curves, tick data, and perform automated sanity checks to compare live operational results against backtest expectations.
 
-## React Compiler
+## Tech Stack
+- React + TypeScript + Vite
+- Tailwind CSS with a refined dark mode UI
+- Supabase (Backend as a Service)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Getting Started
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+1. Set up `.env` with Supabase details (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
+2. Run `npm install`
+3. Run `npm run dev` to start the development server

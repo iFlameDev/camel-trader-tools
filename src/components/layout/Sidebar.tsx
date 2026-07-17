@@ -1,25 +1,41 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FlaskConical, Activity, BarChart3, Menu, X } from 'lucide-react';
+import { FlaskConical, Activity, BarChart3, Menu, X, Database, Clock } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-const navItems = [
+const navGroups = [
   {
-    to: '/research',
-    icon: FlaskConical,
-    label: 'Research Pipeline',
-    description: 'Backtest & simulate',
+    title: 'Research',
+    items: [
+      {
+        to: '/research',
+        icon: FlaskConical,
+        label: 'Research Pipeline',
+        description: 'Backtest & simulate',
+      },
+      {
+        to: '/research-database',
+        icon: Database,
+        label: 'Research Database',
+        description: 'Papers & simulations',
+      },
+    ]
   },
   {
-    to: '/monitor',
-    icon: Activity,
-    label: 'Live Monitor',
-    description: 'Track execution',
-  },
+    title: 'Monitor',
+    items: [
+      {
+        to: '/monitor',
+        icon: Clock,
+        label: 'Upcoming Monitor',
+        description: 'Sync MQL5 accounts',
+      },
+    ]
+  }
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
@@ -60,48 +76,59 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1.5">
-        {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.to);
-          const Icon = item.icon;
+      <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        {navGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className={`${groupIdx > 0 ? 'mt-6' : ''}`}>
+            {!collapsed && (
+              <h3 className="px-3 mb-2 text-[10px] font-semibold text-surface-500 uppercase tracking-widest animate-fade-in">
+                {group.title}
+              </h3>
+            )}
+            <div className="space-y-1.5">
+              {group.items.map((item) => {
+                const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+                const Icon = item.icon;
 
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={`
-                relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                transition-all duration-200 group
-                ${
-                  isActive
-                    ? 'bg-brand-600/10 text-brand-400'
-                    : 'text-surface-400 hover:text-surface-100 hover:bg-surface-800/60'
-                }
-              `}
-            >
-              {/* Active indicator */}
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-brand-500 animate-slide-in-right" />
-              )}
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={`
+                      relative flex items-center gap-3 px-3 py-2.5 rounded-xl
+                      transition-all duration-200 group
+                      ${
+                        isActive
+                          ? 'bg-brand-600/10 text-brand-400'
+                          : 'text-surface-400 hover:text-surface-100 hover:bg-surface-800/60'
+                      }
+                    `}
+                  >
+                    {/* Active indicator */}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-brand-500 animate-slide-in-right" />
+                    )}
 
-              <Icon
-                size={20}
-                className={`shrink-0 transition-colors ${
-                  isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-200'
-                }`}
-              />
+                    <Icon
+                      size={20}
+                      className={`shrink-0 transition-colors ${
+                        isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-200'
+                      }`}
+                    />
 
-              {!collapsed && (
-                <div className="animate-fade-in overflow-hidden">
-                  <p className="text-sm font-medium whitespace-nowrap">{item.label}</p>
-                  <p className="text-[10px] text-surface-500 whitespace-nowrap">
-                    {item.description}
-                  </p>
-                </div>
-              )}
-            </NavLink>
-          );
-        })}
+                    {!collapsed && (
+                      <div className="animate-fade-in overflow-hidden -mt-0.5">
+                        <p className="text-sm font-medium whitespace-nowrap">{item.label}</p>
+                        <p className="text-[10px] text-surface-500 whitespace-nowrap mt-0.5">
+                          {item.description}
+                        </p>
+                      </div>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}

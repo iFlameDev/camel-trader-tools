@@ -2,10 +2,31 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { createChart, ColorType, LineSeries, type IChartApi, type ISeriesApi, type LineData, type Time } from 'lightweight-charts';
 
 interface EquityChartProps {
-  backtestData: { time: string; value: number }[];
-  liveData: { time: string; value: number }[];
+  backtestData: { time: string | number; value: number }[];
+  liveData: { time: string | number; value: number }[];
   className?: string;
 }
+
+const processChartData = (data: { time: string | number; value: number }[]): LineData<Time>[] => {
+  const dataMap = new Map<string | number, number>();
+  data.forEach(item => {
+    dataMap.set(item.time, item.value);
+  });
+
+  return Array.from(dataMap.entries())
+    .map(([timeKey, value]) => {
+      const timeStr = String(timeKey);
+      const isNumeric = !isNaN(Number(timeStr)) && !timeStr.includes('-');
+      const time = isNumeric ? Number(timeStr) : timeStr;
+      return { time: time as Time, value };
+    })
+    .sort((a, b) => {
+      if (typeof a.time === 'number' && typeof b.time === 'number') {
+        return a.time - b.time;
+      }
+      return String(a.time).localeCompare(String(b.time));
+    });
+};
 
 export const EquityChart: React.FC<EquityChartProps> = ({
   backtestData,
@@ -22,8 +43,14 @@ export const EquityChart: React.FC<EquityChartProps> = ({
 
     // Cleanup existing
     if (chartRef.current) {
-      chartRef.current.remove();
+      try {
+        chartRef.current.remove();
+      } catch (e) {
+        // Ignore if already disposed
+      }
       chartRef.current = null;
+      backtestSeriesRef.current = null;
+      liveSeriesRef.current = null;
     }
 
     const chart = createChart(chartContainerRef.current, {
@@ -107,7 +134,16 @@ export const EquityChart: React.FC<EquityChartProps> = ({
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      chart.remove();
+      try {
+        chart.remove();
+      } catch (e) {
+        // Ignore if already disposed
+      }
+      if (chartRef.current === chart) {
+        chartRef.current = null;
+        backtestSeriesRef.current = null;
+        liveSeriesRef.current = null;
+      }
     };
   }, []);
 
@@ -120,19 +156,29 @@ export const EquityChart: React.FC<EquityChartProps> = ({
   // Update backtest data
   useEffect(() => {
     if (backtestSeriesRef.current && backtestData.length > 0) {
-      backtestSeriesRef.current.setData(
-        backtestData.map((d) => ({ time: d.time as Time, value: d.value })) as LineData<Time>[]
-      );
-      chartRef.current?.timeScale().fitContent();
+      try {
+        const processed = processChartData(backtestData);
+        if (processed.length > 0) {
+          backtestSeriesRef.current.setData(processed);
+          chartRef.current?.timeScale().fitContent();
+        }
+      } catch (err) {
+        console.error('Failed to set backtest data:', err);
+      }
     }
   }, [backtestData]);
 
   // Update live data
   useEffect(() => {
     if (liveSeriesRef.current && liveData.length > 0) {
-      liveSeriesRef.current.setData(
-        liveData.map((d) => ({ time: d.time as Time, value: d.value })) as LineData<Time>[]
-      );
+      try {
+        const processed = processChartData(liveData);
+        if (processed.length > 0) {
+          liveSeriesRef.current.setData(processed);
+        }
+      } catch (err) {
+        console.error('Failed to set live data:', err);
+      }
     }
   }, [liveData]);
 
