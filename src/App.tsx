@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { ResearchPage } from './pages/ResearchPage';
 import { ResearchDatabasePage } from './pages/ResearchDatabasePage';
@@ -7,7 +7,7 @@ import { MonitorPage } from './pages/MonitorPage';
 
 function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <HashRouter>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/research" element={<ResearchPage />} />
@@ -17,7 +17,7 @@ function App() {
           <Route path="*" element={<Navigate to="/research" replace />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
