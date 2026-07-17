@@ -7,7 +7,7 @@ import { MonitorPage } from './pages/MonitorPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/research" element={<ResearchPage />} />
