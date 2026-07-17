@@ -41,10 +41,10 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
   stats,
   onBack,
 }) => {
-  // Default avg risk = avg_loss from backtest (absolute value)
-  const defaultAvgRisk = stats.avg_loss > 0 ? stats.avg_loss : 1;
+  // Default avg RR = avg_profit / avg_loss (absolute value)
+  const defaultAvgRR = stats.avg_loss > 0 ? (stats.avg_profit / stats.avg_loss) : 1;
 
-  const [avgRiskInput, setAvgRiskInput] = useState(defaultAvgRisk);
+  const [avgRRInput, setAvgRRInput] = useState<number>(parseFloat(defaultAvgRR.toFixed(2)));
   const [accountSize, setAccountSize] = useState(100000);
   const [riskPerTrade, setRiskPerTrade] = useState(1);
   const [profitTarget, setProfitTarget] = useState(10);
@@ -59,11 +59,14 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
 
   const { run, progress, result, isRunning, error } = useMonteCarloWorker();
 
-  // Compute R-multiples from trades
+  // Compute R-multiples using fixed RR mapping
   const rMultiples = useMemo(() => {
-    if (avgRiskInput <= 0) return [];
-    return trades.map((t) => t.profit / avgRiskInput);
-  }, [trades, avgRiskInput]);
+    return trades.map((t) => {
+      if (t.profit > 0) return avgRRInput;
+      if (t.profit < 0) return -1;
+      return 0; // Breakeven
+    });
+  }, [trades, avgRRInput]);
 
   // Quick R-stats summary
   const rStats = useMemo(() => {
@@ -195,19 +198,19 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
 
         {/* Avg Risk Input for R-multiple */}
         <div className="mb-6">
-          <Tooltip text="Masukkan nilai base risk (risiko awal) per trade dalam angka dollar dari backtest Anda. Angka ini berfungsi sebagai pembagi untuk langsung mengubah dollar profit Anda di CSV menjadi angka Risk to Reward (R-Multiple). Jika file CSV sudah dalam bentuk angka Risk to Reward, cukup masukkan angka 1.">
+          <Tooltip text="Nilai Average Risk-to-Reward. Standarnya dihitung otomatis dari (Average Win / Average Loss). Semua trade yang profit di CSV akan dianggap bernilai sekian R, dan trade yang loss akan dianggap -1R. Sesuaikan angka ini jika Anda ingin menguji rasio RR yang spesifik (misal: 2 untuk RR 1:2).">
             <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-              Risk to Reward (R-Multiplier Base)
+              Average Risk to Reward
             </label>
           </Tooltip>
           <div className="relative">
             <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
             <input
               type="number"
-              value={avgRiskInput}
-              onChange={(e) => setAvgRiskInput(parseFloat(e.target.value) || 0)}
-              step="0.01"
-              min="0.01"
+              value={avgRRInput}
+              onChange={(e) => setAvgRRInput(parseFloat(e.target.value) || 0)}
+              step="0.1"
+              min="0.1"
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-800/80 border border-surface-600 text-surface-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-all text-sm font-mono"
             />
           </div>
