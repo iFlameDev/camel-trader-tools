@@ -14,12 +14,14 @@ import {
   Target,
   Percent,
   Hash,
+  ArrowLeft,
 } from 'lucide-react';
 import { Tooltip } from '../ui/Tooltip';
 
 interface StepBacktestIngestionProps {
   methodId: string;
   onComplete: (backtestId: string, trades: TradeRecord[], stats: BacktestStats) => void;
+  onBack?: () => void;
 }
 
 /**
@@ -114,6 +116,7 @@ function computeStats(trades: TradeRecord[]): BacktestStats {
 export const StepBacktestIngestion: React.FC<StepBacktestIngestionProps> = ({
   methodId,
   onComplete,
+  onBack,
 }) => {
   const [trades, setTrades] = useState<TradeRecord[]>([]);
   const [saving, setSaving] = useState(false);
@@ -325,15 +328,28 @@ export const StepBacktestIngestion: React.FC<StepBacktestIngestionProps> = ({
             </div>
           )}
 
-          <Button
-            onClick={handleSave}
-            loading={saving}
-            size="lg"
-            className="w-full"
-            icon={<ChevronRight size={18} />}
-          >
-            Save Backtest & Continue to Monte Carlo
-          </Button>
+          <div className="flex gap-4">
+            {onBack && (
+              <Button
+                onClick={onBack}
+                variant="secondary"
+                size="lg"
+                icon={<ArrowLeft size={18} />}
+                className="w-full md:w-auto"
+              >
+                Back
+              </Button>
+            )}
+            <Button
+              onClick={handleSave}
+              loading={saving}
+              size="lg"
+              className="flex-1"
+              icon={<ChevronRight size={18} />}
+            >
+              Save Backtest & Continue to Monte Carlo
+            </Button>
+          </div>
         </>
       )}
     </div>

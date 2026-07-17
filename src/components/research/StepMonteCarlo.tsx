@@ -23,18 +23,21 @@ import {
   CalendarDays,
   ListOrdered,
   ArrowDownUp,
+  ArrowLeft,
 } from 'lucide-react';
 
 type StepMonteCarloProps = {
   backtestId: string;
   trades: TradeRecord[];
   stats: BacktestStats;
+  onBack?: () => void;
 };
 
 export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
   backtestId,
   trades,
   stats,
+  onBack,
 }) => {
   // Default avg risk = avg_loss from backtest (absolute value)
   const defaultAvgRisk = stats.avg_loss > 0 ? stats.avg_loss : 1;
@@ -384,16 +387,30 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
         </div>
 
         {/* Run Button */}
-        <Button
-          onClick={handleRunSimulation}
-          loading={isRunning}
-          size="lg"
-          className="w-full"
-          icon={<Play size={18} />}
-          disabled={isRunning || rMultiples.length === 0}
-        >
-          {isRunning ? `Running... ${progressPct}%` : 'Run Monte Carlo Simulation'}
-        </Button>
+        <div className="flex gap-4">
+          {onBack && (
+            <Button
+              onClick={onBack}
+              disabled={isRunning}
+              variant="secondary"
+              size="lg"
+              icon={<ArrowLeft size={18} />}
+              className="w-full md:w-auto"
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            onClick={handleRunSimulation}
+            loading={isRunning}
+            size="lg"
+            className="flex-1"
+            icon={<Play size={18} />}
+            disabled={isRunning || rMultiples.length === 0}
+          >
+            {isRunning ? `Running... ${progressPct}%` : 'Run Monte Carlo Simulation'}
+          </Button>
+        </div>
 
         {/* Progress Bar */}
         {isRunning && progress && (

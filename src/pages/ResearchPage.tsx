@@ -30,6 +30,10 @@ export const ResearchPage: React.FC = () => {
     setCurrentStep(3);
   };
 
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(1, prev - 1));
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Step Indicator */}
@@ -44,6 +48,7 @@ export const ResearchPage: React.FC = () => {
         <StepBacktestIngestion
           methodId={methodId}
           onComplete={handleBacktestComplete}
+          onBack={handleBack}
         />
       )}
 
@@ -52,6 +57,7 @@ export const ResearchPage: React.FC = () => {
           backtestId={backtestId}
           trades={trades}
           stats={stats}
+          onBack={handleBack}
         />
       )}
     </div>
