@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Tooltip } from '../ui/Tooltip';
 import { supabase } from '../../lib/supabase';
 import type { MethodFormData } from '../../types/database';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
-interface StepMethodologyProps {
+type StepMethodologyProps = {
   onComplete: (methodId: string) => void;
-}
+};
 
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
 const PAIRS = [
@@ -75,9 +76,11 @@ export const StepMethodology: React.FC<StepMethodologyProps> = ({ onComplete }) 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Method Name */}
           <div>
-            <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-              Method Name *
-            </label>
+            <Tooltip text="Nama unik untuk metode trading Anda. Gunakan nama yang deskriptif agar mudah diidentifikasi di database. Contoh: 'SMC Asia Session Sweep', 'Bollinger Breakout H1'.">
+              <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
+                Method Name *
+              </label>
+            </Tooltip>
             <input
               type="text"
               value={form.name}
@@ -90,9 +93,11 @@ export const StepMethodology: React.FC<StepMethodologyProps> = ({ onComplete }) 
           {/* Timeframe & Pair */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-                Timeframe
-              </label>
+              <Tooltip text="Period chart yang digunakan untuk analisis. Timeframe lebih kecil (M1-M15) menghasilkan lebih banyak sinyal tapi noise lebih tinggi. Timeframe lebih besar (H4-D1) memberikan sinyal yang lebih bersih tapi trade lebih sedikit.">
+                <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
+                  Timeframe
+                </label>
+              </Tooltip>
               <select
                 value={form.timeframe || ''}
                 onChange={(e) => setForm({ ...form, timeframe: e.target.value })}
@@ -107,9 +112,11 @@ export const StepMethodology: React.FC<StepMethodologyProps> = ({ onComplete }) 
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-                Trading Pair
-              </label>
+              <Tooltip text="Instrumen yang diperdagangkan. Pilih sesuai pair yang digunakan di backtest. Setiap pair memiliki volatilitas dan spread yang berbeda, yang mempengaruhi hasil simulasi.">
+                <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
+                  Trading Pair
+                </label>
+              </Tooltip>
               <select
                 value={form.pair || ''}
                 onChange={(e) => setForm({ ...form, pair: e.target.value })}
@@ -126,9 +133,11 @@ export const StepMethodology: React.FC<StepMethodologyProps> = ({ onComplete }) 
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-              Description
-            </label>
+            <Tooltip text="Deskripsi aturan entry, exit, dan filter dari metode trading. Berguna untuk dokumentasi riset dan referensi di kemudian hari. Tuliskan secara detail agar bisa direplikasi.">
+              <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
+                Description
+              </label>
+            </Tooltip>
             <textarea
               value={form.description || ''}
               onChange={(e) => setForm({ ...form, description: e.target.value })}

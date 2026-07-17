@@ -30,7 +30,7 @@ import type {
   Method,
   BacktestStats,
   TradeRecord,
-  MonteCarloSimulationData,
+  MonteCarloV2Result,
 } from '../types/database';
 
 // ------------- Types for fetched data -----------------
@@ -47,7 +47,7 @@ type MonteCarloRow = {
   prop_firm_total_dd: number;
   pass_probability: number;
   avg_trades_to_pass: number;
-  simulation_data: MonteCarloSimulationData;
+  simulation_data: MonteCarloV2Result;
   created_at: string;
 };
 
@@ -436,7 +436,7 @@ export const ResearchDataPage: React.FC = () => {
               </div>
             </div>
 
-            {/* MC Key Metrics */}
+            {/* MC Key Metrics — Row 1 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard
                 label="Pass Probability"
@@ -447,10 +447,26 @@ export const ResearchDataPage: React.FC = () => {
                 icon={<BarChart3 size={16} />}
               />
               <StatCard
+                label="Est. Max Trades (P95)"
+                value={mcData.percentile_95_trades ?? '—'}
+                trend="neutral"
+                trendValue="95th percentile"
+                icon={<Clock size={16} />}
+              />
+              <StatCard
+                label="Median Trades"
+                value={mcData.median_trades_to_pass ?? '—'}
+                icon={<Target size={16} />}
+              />
+              <StatCard
                 label="Avg Trades to Pass"
                 value={mcData.avg_trades_to_pass}
                 icon={<Target size={16} />}
               />
+            </div>
+
+            {/* MC Key Metrics — Row 2: Pass/Fail breakdown */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard
                 label="Passed"
                 value={mcData.pass_count.toLocaleString()}
@@ -459,10 +475,24 @@ export const ResearchDataPage: React.FC = () => {
                 icon={<CheckCircle2 size={16} />}
               />
               <StatCard
-                label="Failed"
-                value={mcData.fail_count.toLocaleString()}
+                label="Failed — Daily DD"
+                value={(mcData.fail_by_daily_dd ?? 0).toLocaleString()}
                 trend="down"
-                trendValue={`${(100 - mcData.pass_probability).toFixed(1)}%`}
+                trendValue={`${mcData.fail_count > 0 ? (((mcData.fail_by_daily_dd ?? 0) / mcData.fail_count) * 100).toFixed(0) : 0}% of fails`}
+                icon={<XCircle size={16} />}
+              />
+              <StatCard
+                label="Failed — Total DD"
+                value={(mcData.fail_by_total_dd ?? 0).toLocaleString()}
+                trend="down"
+                trendValue={`${mcData.fail_count > 0 ? (((mcData.fail_by_total_dd ?? 0) / mcData.fail_count) * 100).toFixed(0) : 0}% of fails`}
+                icon={<XCircle size={16} />}
+              />
+              <StatCard
+                label="Failed — No Target"
+                value={(mcData.fail_by_no_target ?? 0).toLocaleString()}
+                trend="down"
+                trendValue="Ran out of trades"
                 icon={<XCircle size={16} />}
               />
             </div>
@@ -474,6 +504,20 @@ export const ResearchDataPage: React.FC = () => {
               </h4>
               <HistogramChart data={mcData.equity_distribution} target={monteCarlo.prop_firm_target} />
             </Card>
+
+            {/* Trades to Pass Distribution */}
+            {mcData.trades_to_pass_distribution && mcData.trades_to_pass_distribution.length > 0 && (
+              <Card>
+                <h4 className="text-sm font-semibold text-surface-200 mb-4">
+                  Trades to Pass Distribution
+                </h4>
+                <HistogramChart
+                  data={mcData.trades_to_pass_distribution}
+                  target={mcData.percentile_95_trades ?? 0}
+                  label={`P95: ~${mcData.percentile_95_trades ?? 0} trades`}
+                />
+              </Card>
+            )}
 
             <p className="text-[10px] text-surface-600 text-right flex items-center justify-end gap-1">
               <Clock size={10} /> Simulated on {new Date(monteCarlo.created_at).toLocaleString()}
@@ -492,7 +536,7 @@ export const ResearchDataPage: React.FC = () => {
 // ============================================================
 // Simple Histogram (pure CSS bars) — copied from StepMonteCarlo
 // ============================================================
-const HistogramChart: React.FC<{ data: number[]; target: number }> = ({ data, target }) => {
+const HistogramChart: React.FC<{ data: number[]; target: number; label?: string }> = ({ data, target, label }) => {
   if (data.length === 0) return null;
 
   const NUM_BINS = 40;
@@ -508,7 +552,7 @@ const HistogramChart: React.FC<{ data: number[]; target: number }> = ({ data, ta
   }
 
   const maxBin = Math.max(...bins);
-  const targetBinIdx = Math.floor((target - min) / binSize);
+  const targetBinIdx = Math.min(Math.max(Math.floor((target - min) / binSize), 0), NUM_BINS - 1);
 
   return (
     <div className="relative">
@@ -532,7 +576,7 @@ const HistogramChart: React.FC<{ data: number[]; target: number }> = ({ data, ta
       </div>
       <div className="flex justify-between mt-2 text-[10px] text-surface-500 font-mono">
         <span>{min.toFixed(1)}</span>
-        <span className="text-accent-400">Target: {target}</span>
+        <span className="text-accent-400">{label || `Target: ${target}`}</span>
         <span>{max.toFixed(1)}</span>
       </div>
     </div>

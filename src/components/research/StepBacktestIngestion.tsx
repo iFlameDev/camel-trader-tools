@@ -15,6 +15,7 @@ import {
   Percent,
   Hash,
 } from 'lucide-react';
+import { Tooltip } from '../ui/Tooltip';
 
 interface StepBacktestIngestionProps {
   methodId: string;
@@ -171,7 +172,9 @@ export const StepBacktestIngestion: React.FC<StepBacktestIngestionProps> = ({
             <Database size={20} className="text-accent-400" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-surface-100">Backtest Ingestion</h3>
+            <Tooltip text="Upload file CSV hasil export dari TradingView Strategy Tester. Sistem akan otomatis mendeteksi kolom profit, drawdown, dan trade number. Pastikan CSV memiliki header dan minimal kolom 'Profit'." showIcon={false}>
+              <h3 className="text-lg font-bold text-surface-100">Backtest Ingestion</h3>
+            </Tooltip>
             <p className="text-xs text-surface-400">
               Upload your TradingView strategy report CSV
             </p>
@@ -242,9 +245,11 @@ export const StepBacktestIngestion: React.FC<StepBacktestIngestionProps> = ({
           {/* Trade Preview Table */}
           <Card padding="sm">
             <div className="flex items-center justify-between mb-4 px-2">
+            <Tooltip text="Statistik dihitung otomatis dari data trade CSV Anda. Win Rate = persentase trade profit. Profit Factor = total gross profit / total gross loss. Sharpe Ratio = rasio rata-rata return terhadap standar deviasinya." showIcon={false}>
               <h4 className="text-sm font-semibold text-surface-200">
                 Trade History Preview
               </h4>
+            </Tooltip>
               <span className="text-xs text-surface-500 font-mono">
                 {trades.length} rows parsed
               </span>

@@ -1,29 +1,23 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
-  MonteCarloSimulationData,
+  MonteCarloV2Result,
   MonteCarloProgress,
   MonteCarloWorkerMessage,
-  TradeRecord,
+  MonteCarloV2Params,
 } from '../types/database';
 
-interface UseMonteCarloWorkerReturn {
-  run: (params: {
-    trades: TradeRecord[];
-    iterations: number;
-    targetProfit: number;
-    maxDailyDD: number;
-    maxTotalDD: number;
-  }) => void;
+type UseMonteCarloWorkerReturn = {
+  run: (params: MonteCarloV2Params) => void;
   progress: MonteCarloProgress | null;
-  result: MonteCarloSimulationData | null;
+  result: MonteCarloV2Result | null;
   isRunning: boolean;
   error: string | null;
   reset: () => void;
-}
+};
 
 export function useMonteCarloWorker(): UseMonteCarloWorkerReturn {
   const [progress, setProgress] = useState<MonteCarloProgress | null>(null);
-  const [result, setResult] = useState<MonteCarloSimulationData | null>(null);
+  const [result, setResult] = useState<MonteCarloV2Result | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -36,13 +30,7 @@ export function useMonteCarloWorker(): UseMonteCarloWorkerReturn {
   }, []);
 
   const run = useCallback(
-    (params: {
-      trades: TradeRecord[];
-      iterations: number;
-      targetProfit: number;
-      maxDailyDD: number;
-      maxTotalDD: number;
-    }) => {
+    (params: MonteCarloV2Params) => {
       // Terminate any existing worker
       workerRef.current?.terminate();
 
@@ -63,7 +51,7 @@ export function useMonteCarloWorker(): UseMonteCarloWorkerReturn {
           if (msg.type === 'progress') {
             setProgress(msg.data as MonteCarloProgress);
           } else if (msg.type === 'result') {
-            setResult(msg.data as MonteCarloSimulationData);
+            setResult(msg.data as MonteCarloV2Result);
             setIsRunning(false);
             worker.terminate();
           }
@@ -75,17 +63,8 @@ export function useMonteCarloWorker(): UseMonteCarloWorkerReturn {
           worker.terminate();
         };
 
-        // Send params — extract only numeric profit/drawdown for the worker
-        worker.postMessage({
-          trades: params.trades.map((t) => ({
-            profit: t.profit,
-            drawdown: t.drawdown,
-          })),
-          iterations: params.iterations,
-          targetProfit: params.targetProfit,
-          maxDailyDD: params.maxDailyDD,
-          maxTotalDD: params.maxTotalDD,
-        });
+        // Send full V2 params to the worker
+        worker.postMessage(params);
 
         workerRef.current = worker;
       } catch (err) {

@@ -2,7 +2,7 @@
 // Database Types — mirrors Supabase schema
 // ============================================================
 
-export interface Method {
+export type Method = {
   id: string;
   name: string;
   timeframe: string | null;
@@ -10,17 +10,17 @@ export interface Method {
   description: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface BacktestSession {
+export type BacktestSession = {
   id: string;
   method_id: string;
   stats_json: BacktestStats;
   trade_history_json: TradeRecord[];
   created_at: string;
-}
+};
 
-export interface MonteCarloResult {
+export type MonteCarloResult = {
   id: string;
   backtest_id: string;
   prop_firm_target: number;
@@ -28,23 +28,23 @@ export interface MonteCarloResult {
   prop_firm_total_dd: number;
   pass_probability: number;
   avg_trades_to_pass: number;
-  simulation_data: MonteCarloSimulationData;
+  simulation_data: MonteCarloV2Result;
   created_at: string;
-}
+};
 
-export interface LiveMonitor {
+export type LiveMonitor = {
   id: string;
   method_id: string;
   live_equity_curve: EquityPoint[];
   live_win_rate: number;
   created_at: string;
-}
+};
 
 // ============================================================
 // Trade Data Types
 // ============================================================
 
-export interface TradeRecord {
+export type TradeRecord = {
   trade_number: number;
   type: 'Long' | 'Short' | string;
   signal: string;
@@ -54,9 +54,9 @@ export interface TradeRecord {
   cumulative_profit: number;
   run_up: number;
   drawdown: number;
-}
+};
 
-export interface BacktestStats {
+export type BacktestStats = {
   total_trades: number;
   winning_trades: number;
   losing_trades: number;
@@ -70,57 +70,62 @@ export interface BacktestStats {
   largest_loss: number;
   sharpe_ratio: number;
   expectancy: number;
-}
+};
 
 // ============================================================
-// Monte Carlo Types
+// Monte Carlo V2 Types
 // ============================================================
 
-export interface MonteCarloParams {
-  trades: TradeRecord[];
+export type MonteCarloV2Params = {
+  rMultiples: number[];
+  accountSize: number;
+  riskPerTrade: number;       // percentage, e.g. 1 = 1%
+  profitTarget: number;       // percentage, e.g. 10 = 10%
+  maxDailyDD: number;         // percentage, e.g. 5 = 5%
+  maxTotalDD: number;         // percentage, e.g. 10 = 10%
+  drawdownType: 'static' | 'trailing';
+  minTradingDays: number;
+  maxTradesPerDay: number;
   iterations: number;
-  targetProfit: number;
-  maxDailyDD: number;
-  maxTotalDD: number;
-}
+};
 
-export interface MonteCarloSimulationData {
+export type MonteCarloV2Result = {
   pass_probability: number;
   avg_trades_to_pass: number;
-  equity_distribution: number[];
-  max_dd_distribution: number[];
+  median_trades_to_pass: number;
+  percentile_95_trades: number;
   pass_count: number;
   fail_count: number;
-}
+  fail_by_daily_dd: number;
+  fail_by_total_dd: number;
+  fail_by_no_target: number;
+  equity_distribution: number[];
+  max_dd_distribution: number[];
+  trades_to_pass_distribution: number[];
+};
 
-export interface MonteCarloProgress {
+export type MonteCarloProgress = {
   completed: number;
   total: number;
   percentage: number;
-}
+};
 
-export interface MonteCarloWorkerMessage {
+export type MonteCarloWorkerMessage = {
   type: 'progress' | 'result';
-  data: MonteCarloProgress | MonteCarloSimulationData;
-}
+  data: MonteCarloProgress | MonteCarloV2Result;
+};
 
 // ============================================================
 // Chart Types
 // ============================================================
 
-export interface EquityPoint {
+export type EquityPoint = {
   time: string;
   value: number;
-}
+};
 
 // ============================================================
 // Form Types
 // ============================================================
 
 export type MethodFormData = Omit<Method, 'id' | 'created_at' | 'updated_at'>;
-
-export interface PropFirmParams {
-  targetProfit: number;
-  maxDailyDD: number;
-  maxTotalDD: number;
-}

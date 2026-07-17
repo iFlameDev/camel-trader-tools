@@ -1,19 +1,19 @@
 // ============================================================
-// Monte Carlo Simulation Web Worker
-// Runs N iterations of random resampling off the main thread
+// Monte Carlo V2 Simulation Web Worker
+// Compound risk, R-multiples, static/trailing DD, min trading days
 // ============================================================
 
-type TradeInput = {
-  profit: number;
-  drawdown: number;
-};
-
 type SimulationParams = {
-  trades: TradeInput[];
-  iterations: number;
-  targetProfit: number;
+  rMultiples: number[];
+  accountSize: number;
+  riskPerTrade: number;
+  profitTarget: number;
   maxDailyDD: number;
   maxTotalDD: number;
+  drawdownType: 'static' | 'trailing';
+  minTradingDays: number;
+  maxTradesPerDay: number;
+  iterations: number;
 };
 
 type ProgressMessage = {
@@ -25,21 +25,26 @@ type ProgressMessage = {
   };
 };
 
-type ResultMessage = {
-  type: 'result';
-  data: {
-    pass_probability: number;
-    avg_trades_to_pass: number;
-    equity_distribution: number[];
-    max_dd_distribution: number[];
-    pass_count: number;
-    fail_count: number;
-  };
+type SimResult = {
+  pass_probability: number;
+  avg_trades_to_pass: number;
+  median_trades_to_pass: number;
+  percentile_95_trades: number;
+  pass_count: number;
+  fail_count: number;
+  fail_by_daily_dd: number;
+  fail_by_total_dd: number;
+  fail_by_no_target: number;
+  equity_distribution: number[];
+  max_dd_distribution: number[];
+  trades_to_pass_distribution: number[];
 };
 
-/**
- * Fisher-Yates shuffle (in-place, returns same array)
- */
+type ResultMessage = {
+  type: 'result';
+  data: SimResult;
+};
+
 function shuffleArray(arr: number[]): number[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -50,96 +55,183 @@ function shuffleArray(arr: number[]): number[] {
   return arr;
 }
 
+function percentile(sortedArr: number[], p: number): number {
+  if (sortedArr.length === 0) return 0;
+  const idx = (p / 100) * (sortedArr.length - 1);
+  const lower = Math.floor(idx);
+  const upper = Math.ceil(idx);
+  if (lower === upper) return sortedArr[lower];
+  return sortedArr[lower] + (sortedArr[upper] - sortedArr[lower]) * (idx - lower);
+}
+
 const ctx = self as unknown as Worker;
 
 ctx.onmessage = (event: MessageEvent<SimulationParams>) => {
   try {
-    const { trades, iterations, targetProfit, maxDailyDD, maxTotalDD } = event.data;
+    const {
+      rMultiples,
+      accountSize,
+      riskPerTrade,
+      profitTarget,
+      maxDailyDD,
+      maxTotalDD,
+      drawdownType,
+      minTradingDays,
+      maxTradesPerDay,
+      iterations,
+    } = event.data;
 
-    if (!trades || trades.length === 0) {
-      const result: ResultMessage = {
+    if (!rMultiples || rMultiples.length === 0) {
+      const empty: ResultMessage = {
         type: 'result',
         data: {
           pass_probability: 0,
           avg_trades_to_pass: 0,
-          equity_distribution: [],
-          max_dd_distribution: [],
+          median_trades_to_pass: 0,
+          percentile_95_trades: 0,
           pass_count: 0,
           fail_count: 0,
+          fail_by_daily_dd: 0,
+          fail_by_total_dd: 0,
+          fail_by_no_target: 0,
+          equity_distribution: [],
+          max_dd_distribution: [],
+          trades_to_pass_distribution: [],
         },
       };
-      ctx.postMessage(result);
+      ctx.postMessage(empty);
       return;
     }
 
-    // Extract just the profit values for resampling
-    const profitValues = trades.map((t) => t.profit);
-    const totalTrades = profitValues.length;
+    // Convert percentages to fractions
+    const riskFrac = riskPerTrade / 100;
+    const targetAmount = accountSize * (profitTarget / 100);
+    const dailyDDAmount = accountSize * (maxDailyDD / 100);
+    const totalDDAmount = accountSize * (maxTotalDD / 100);
 
     let passCount = 0;
     let totalTradesToPass = 0;
+    let failByDailyDD = 0;
+    let failByTotalDD = 0;
+    let failByNoTarget = 0;
+
     const finalEquities: number[] = [];
     const maxDrawdowns: number[] = [];
+    const tradesToPassArr: number[] = [];
 
     const PROGRESS_INTERVAL = 500;
+    const totalR = rMultiples.length;
 
     for (let i = 0; i < iterations; i++) {
-      // Create a shuffled copy for this iteration
-      const shuffled = shuffleArray([...profitValues]);
+      const shuffled = shuffleArray([...rMultiples]);
 
-      let equity = 0;
-      let peak = 0;
+      let balance = accountSize;
+      let peakBalance = accountSize;
       let maxDD = 0;
       let dailyPnL = 0;
-      let passed = false;
-      let tradesToPass = totalTrades;
       let dailyTradeCount = 0;
-      const TRADES_PER_DAY = 5; // approximate trades per session
+      let passed = false;
+      let tradesToPass = totalR;
+      let failReason: 'daily_dd' | 'total_dd' | 'no_target' | null = null;
 
       for (let j = 0; j < shuffled.length; j++) {
-        const pnl = shuffled[j];
-        equity += pnl;
-        dailyPnL += pnl;
+        const rMult = shuffled[j];
+
+        // Compound risk: risk amount based on CURRENT balance
+        const riskAmount = riskFrac * balance;
+        const tradePnL = rMult * riskAmount;
+
+        balance += tradePnL;
+        dailyPnL += tradePnL;
         dailyTradeCount++;
 
-        // Update peak and drawdown
-        if (equity > peak) peak = equity;
-        const currentDD = peak - equity;
+        // Track peak & drawdown
+        if (balance > peakBalance) peakBalance = balance;
+
+        let currentDD: number;
+        if (drawdownType === 'trailing') {
+          currentDD = peakBalance - balance;
+        } else {
+          // Static: measured from initial account size
+          currentDD = accountSize - balance;
+          if (currentDD < 0) currentDD = 0;
+        }
         if (currentDD > maxDD) maxDD = currentDD;
 
-        // Check daily DD limit (reset daily PnL every N trades)
-        if (dailyTradeCount >= TRADES_PER_DAY) {
+        // Daily DD check (reset every maxTradesPerDay trades)
+        if (dailyTradeCount >= maxTradesPerDay) {
+          // Check daily DD before resetting
+          if (dailyPnL < 0 && Math.abs(dailyPnL) >= dailyDDAmount) {
+            failReason = 'daily_dd';
+            break;
+          }
           dailyPnL = 0;
           dailyTradeCount = 0;
         }
 
-        // Check if daily DD breached
-        if (Math.abs(dailyPnL) >= maxDailyDD && dailyPnL < 0) {
+        // Also check daily DD mid-day
+        if (dailyPnL < 0 && Math.abs(dailyPnL) >= dailyDDAmount) {
+          failReason = 'daily_dd';
           break;
         }
 
-        // Check if total DD breached
-        if (currentDD >= maxTotalDD) {
+        // Total DD check
+        if (currentDD >= totalDDAmount) {
+          failReason = 'total_dd';
           break;
         }
 
-        // Check if target reached
-        if (equity >= targetProfit) {
-          passed = true;
-          tradesToPass = j + 1;
+        // Check if balance is blown (can't continue)
+        if (balance <= 0) {
+          failReason = 'total_dd';
           break;
+        }
+
+        // Check profit target
+        const profitAmount = balance - accountSize;
+        if (profitAmount >= targetAmount) {
+          // Check if min trading days are met
+          const tradingDaysSoFar = Math.ceil((j + 1) / maxTradesPerDay);
+          if (tradingDaysSoFar >= minTradingDays) {
+            passed = true;
+            tradesToPass = j + 1;
+            break;
+          }
+          // If not enough trading days, continue trading but remember we hit target
+        }
+      }
+
+      // If we ran out of trades without passing or failing
+      if (!passed && !failReason) {
+        // Check if we hit target but didn't have enough days
+        const profitAmount = balance - accountSize;
+        if (profitAmount >= targetAmount) {
+          const tradingDaysSoFar = Math.ceil(totalR / maxTradesPerDay);
+          if (tradingDaysSoFar >= minTradingDays) {
+            passed = true;
+            tradesToPass = totalR;
+          } else {
+            failReason = 'no_target';
+          }
+        } else {
+          failReason = 'no_target';
         }
       }
 
       if (passed) {
         passCount++;
         totalTradesToPass += tradesToPass;
+        tradesToPassArr.push(tradesToPass);
+      } else {
+        if (failReason === 'daily_dd') failByDailyDD++;
+        else if (failReason === 'total_dd') failByTotalDD++;
+        else failByNoTarget++;
       }
 
-      finalEquities.push(equity);
+      finalEquities.push(balance);
       maxDrawdowns.push(maxDD);
 
-      // Send progress update
+      // Progress
       if ((i + 1) % PROGRESS_INTERVAL === 0 || i === iterations - 1) {
         const progress: ProgressMessage = {
           type: 'progress',
@@ -153,6 +245,10 @@ ctx.onmessage = (event: MessageEvent<SimulationParams>) => {
       }
     }
 
+    // Compute percentiles
+    const sortedTrades = [...tradesToPassArr].sort((a, b) => a - b);
+    const medianTrades = percentile(sortedTrades, 50);
+    const p95Trades = percentile(sortedTrades, 95);
     const avgTradesToPass = passCount > 0 ? Math.round(totalTradesToPass / passCount) : 0;
 
     const result: ResultMessage = {
@@ -160,10 +256,16 @@ ctx.onmessage = (event: MessageEvent<SimulationParams>) => {
       data: {
         pass_probability: parseFloat(((passCount / iterations) * 100).toFixed(2)),
         avg_trades_to_pass: avgTradesToPass,
-        equity_distribution: finalEquities,
-        max_dd_distribution: maxDrawdowns,
+        median_trades_to_pass: Math.round(medianTrades),
+        percentile_95_trades: Math.round(p95Trades),
         pass_count: passCount,
         fail_count: iterations - passCount,
+        fail_by_daily_dd: failByDailyDD,
+        fail_by_total_dd: failByTotalDD,
+        fail_by_no_target: failByNoTarget,
+        equity_distribution: finalEquities,
+        max_dd_distribution: maxDrawdowns,
+        trades_to_pass_distribution: sortedTrades,
       },
     };
 
@@ -174,11 +276,16 @@ ctx.onmessage = (event: MessageEvent<SimulationParams>) => {
       data: {
         pass_probability: 0,
         avg_trades_to_pass: 0,
-        equity_distribution: [],
-        max_dd_distribution: [],
+        median_trades_to_pass: 0,
+        percentile_95_trades: 0,
         pass_count: 0,
         fail_count: 0,
-        error: err instanceof Error ? err.message : 'Unknown worker error',
+        fail_by_daily_dd: 0,
+        fail_by_total_dd: 0,
+        fail_by_no_target: 0,
+        equity_distribution: [],
+        max_dd_distribution: [],
+        trades_to_pass_distribution: [],
       },
     });
   }
