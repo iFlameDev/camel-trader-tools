@@ -195,9 +195,9 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
 
         {/* Avg Risk Input for R-multiple */}
         <div className="mb-6">
-          <Tooltip text="Nilai numerik pembagi profit per trade. Biasanya ini adalah rata-rata risk awal per trade saat melakukan backtest. Digunakan untuk menormalisasi semua profit menjadi R-multiple (kelipatan risk). Default diambil dari avg loss.">
+          <Tooltip text="Masukkan nilai base risk (risiko awal) per trade dalam angka dollar dari backtest Anda. Angka ini berfungsi sebagai pembagi untuk langsung mengubah dollar profit Anda di CSV menjadi angka Risk to Reward (R-Multiple). Jika file CSV sudah dalam bentuk angka Risk to Reward, cukup masukkan angka 1.">
             <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-              Average Risk per Trade (R-Value Divisor)
+              Risk to Reward (R-Multiplier Base)
             </label>
           </Tooltip>
           <div className="relative">
@@ -541,39 +541,13 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
             />
           </div>
 
-          {/* Equity Distribution Histogram */}
-          <Card>
-            <h4 className="text-sm font-semibold text-surface-200 mb-4">
-              Final Equity Distribution
-            </h4>
-            <HistogramChart
-              data={result.equity_distribution}
-              target={accountSize + accountSize * (profitTarget / 100)}
-              label={`Target: $${(accountSize + accountSize * (profitTarget / 100)).toLocaleString()}`}
-            />
-          </Card>
-
-          {/* Trades to Pass Distribution */}
-          {result.trades_to_pass_distribution.length > 0 && (
-            <Card>
-              <h4 className="text-sm font-semibold text-surface-200 mb-4">
-                Trades to Pass Distribution
-              </h4>
-              <HistogramChart
-                data={result.trades_to_pass_distribution}
-                target={result.percentile_95_trades}
-                label={`P95: ~${result.percentile_95_trades} trades`}
-              />
-            </Card>
-          )}
-
           {/* Save Button */}
           <Button
             onClick={handleSave}
             loading={saving}
             variant={saved ? 'secondary' : 'primary'}
             size="lg"
-            className="w-full"
+            className="w-full mt-6"
             icon={saved ? <CheckCircle2 size={18} /> : <Save size={18} />}
             disabled={saved}
           >
@@ -581,57 +555,6 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
           </Button>
         </div>
       )}
-    </div>
-  );
-};
-
-// ============================================================
-// Simple Histogram (canvas-free, pure CSS bars)
-// ============================================================
-
-const HistogramChart: React.FC<{ data: number[]; target: number; label?: string }> = ({ data, target, label }) => {
-  if (data.length === 0) return null;
-
-  const NUM_BINS = 40;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const binSize = range / NUM_BINS;
-
-  const bins = new Array(NUM_BINS).fill(0) as number[];
-  for (const val of data) {
-    const idx = Math.min(Math.floor((val - min) / binSize), NUM_BINS - 1);
-    bins[idx]++;
-  }
-
-  const maxBin = Math.max(...bins);
-  const targetBinIdx = Math.min(Math.max(Math.floor((target - min) / binSize), 0), NUM_BINS - 1);
-
-  return (
-    <div className="relative">
-      <div className="flex items-end gap-[1px] h-[140px]">
-        {bins.map((count, idx) => {
-          const height = maxBin > 0 ? (count / maxBin) * 100 : 0;
-          const isTarget = idx === targetBinIdx;
-          const isAboveTarget = idx >= targetBinIdx;
-
-          return (
-            <div
-              key={idx}
-              className={`flex-1 rounded-t-sm transition-all duration-500 ${
-                isAboveTarget ? 'bg-profit/60' : 'bg-loss/40'
-              } ${isTarget ? 'ring-1 ring-accent-400' : ''}`}
-              style={{ height: `${height}%` }}
-              title={`Range: ${(min + idx * binSize).toFixed(1)} - ${(min + (idx + 1) * binSize).toFixed(1)}\nCount: ${count}`}
-            />
-          );
-        })}
-      </div>
-      <div className="flex justify-between mt-2 text-[10px] text-surface-500 font-mono">
-        <span>{min.toFixed(1)}</span>
-        <span className="text-accent-400">{label || `Target: ${target.toFixed(1)}`}</span>
-        <span>{max.toFixed(1)}</span>
-      </div>
     </div>
   );
 };

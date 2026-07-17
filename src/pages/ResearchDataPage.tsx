@@ -497,29 +497,7 @@ export const ResearchDataPage: React.FC = () => {
               />
             </div>
 
-            {/* Equity Distribution Histogram */}
-            <Card>
-              <h4 className="text-sm font-semibold text-surface-200 mb-4">
-                Final Equity Distribution
-              </h4>
-              <HistogramChart data={mcData.equity_distribution} target={monteCarlo.prop_firm_target} />
-            </Card>
-
-            {/* Trades to Pass Distribution */}
-            {mcData.trades_to_pass_distribution && mcData.trades_to_pass_distribution.length > 0 && (
-              <Card>
-                <h4 className="text-sm font-semibold text-surface-200 mb-4">
-                  Trades to Pass Distribution
-                </h4>
-                <HistogramChart
-                  data={mcData.trades_to_pass_distribution}
-                  target={mcData.percentile_95_trades ?? 0}
-                  label={`P95: ~${mcData.percentile_95_trades ?? 0} trades`}
-                />
-              </Card>
-            )}
-
-            <p className="text-[10px] text-surface-600 text-right flex items-center justify-end gap-1">
+            <p className="text-[10px] text-surface-600 text-right flex items-center justify-end gap-1 mt-4">
               <Clock size={10} /> Simulated on {new Date(monteCarlo.created_at).toLocaleString()}
             </p>
           </div>
@@ -528,56 +506,6 @@ export const ResearchDataPage: React.FC = () => {
             <p className="text-surface-500 text-sm">No Monte Carlo results found for this method.</p>
           </Card>
         )}
-      </div>
-    </div>
-  );
-};
-
-// ============================================================
-// Simple Histogram (pure CSS bars) — copied from StepMonteCarlo
-// ============================================================
-const HistogramChart: React.FC<{ data: number[]; target: number; label?: string }> = ({ data, target, label }) => {
-  if (data.length === 0) return null;
-
-  const NUM_BINS = 40;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const binSize = range / NUM_BINS;
-
-  const bins = new Array(NUM_BINS).fill(0) as number[];
-  for (const val of data) {
-    const idx = Math.min(Math.floor((val - min) / binSize), NUM_BINS - 1);
-    bins[idx]++;
-  }
-
-  const maxBin = Math.max(...bins);
-  const targetBinIdx = Math.min(Math.max(Math.floor((target - min) / binSize), 0), NUM_BINS - 1);
-
-  return (
-    <div className="relative">
-      <div className="flex items-end gap-[1px] h-[140px]">
-        {bins.map((count, idx) => {
-          const height = maxBin > 0 ? (count / maxBin) * 100 : 0;
-          const isTarget = idx === targetBinIdx;
-          const isAboveTarget = idx >= targetBinIdx;
-
-          return (
-            <div
-              key={idx}
-              className={`flex-1 rounded-t-sm transition-all duration-500 ${
-                isAboveTarget ? 'bg-profit/60' : 'bg-loss/40'
-              } ${isTarget ? 'ring-1 ring-accent-400' : ''}`}
-              style={{ height: `${height}%` }}
-              title={`Range: ${(min + idx * binSize).toFixed(1)} - ${(min + (idx + 1) * binSize).toFixed(1)}\nCount: ${count}`}
-            />
-          );
-        })}
-      </div>
-      <div className="flex justify-between mt-2 text-[10px] text-surface-500 font-mono">
-        <span>{min.toFixed(1)}</span>
-        <span className="text-accent-400">{label || `Target: ${target}`}</span>
-        <span>{max.toFixed(1)}</span>
       </div>
     </div>
   );
