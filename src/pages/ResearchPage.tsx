@@ -40,26 +40,30 @@ export const ResearchPage: React.FC = () => {
       <StepIndicator steps={STEPS} currentStep={currentStep} />
 
       {/* Step Content */}
-      {currentStep === 1 && (
+      <div className={currentStep === 1 ? 'block' : 'hidden'}>
         <StepMethodology onComplete={handleMethodComplete} />
-      )}
+      </div>
 
-      {currentStep === 2 && methodId && (
-        <StepBacktestIngestion
-          methodId={methodId}
-          onComplete={handleBacktestComplete}
-          onBack={handleBack}
-        />
-      )}
+      <div className={currentStep === 2 ? 'block' : 'hidden'}>
+        {methodId && (
+          <StepBacktestIngestion
+            methodId={methodId}
+            onComplete={handleBacktestComplete}
+            onBack={handleBack}
+          />
+        )}
+      </div>
 
-      {currentStep === 3 && backtestId && stats && (
-        <StepMonteCarlo
-          backtestId={backtestId}
-          trades={trades}
-          stats={stats}
-          onBack={handleBack}
-        />
-      )}
+      <div className={currentStep === 3 ? 'block' : 'hidden'}>
+        {backtestId && stats && (
+          <StepMonteCarlo
+            backtestId={backtestId}
+            trades={trades}
+            stats={stats}
+            onBack={handleBack}
+          />
+        )}
+      </div>
     </div>
   );
 };

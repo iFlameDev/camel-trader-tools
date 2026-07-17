@@ -11,6 +11,7 @@ import {
   Zap,
   Target,
   TrendingDown,
+  TrendingUp,
   BarChart3,
   CheckCircle2,
   XCircle,
@@ -20,6 +21,7 @@ import {
   Repeat,
   DollarSign,
   Percent,
+  Hash,
   CalendarDays,
   ListOrdered,
   ArrowDownUp,
@@ -135,31 +137,71 @@ export const StepMonteCarlo: React.FC<StepMonteCarloProps> = ({
           </div>
         </div>
 
-        {/* Backtest stats reminder */}
-        <div className="grid grid-cols-3 gap-3 mb-6 p-4 rounded-xl bg-surface-800/50">
-          <div className="text-center">
-            <p className="text-xs text-surface-400">Trades</p>
-            <p className="text-lg font-bold font-mono text-surface-100">{stats.total_trades}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-surface-400">Win Rate</p>
-            <p className="text-lg font-bold font-mono text-surface-100">{stats.win_rate}%</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-surface-400">Avg Loss</p>
-            <p className="text-lg font-bold font-mono text-loss">${stats.avg_loss.toFixed(2)}</p>
-          </div>
+        {/* Backtest stats reminder profile */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <StatCard
+            label="Total Trades"
+            value={stats.total_trades}
+            icon={<Hash size={16} />}
+          />
+          <StatCard
+            label="Win Rate"
+            value={stats.win_rate}
+            suffix="%"
+            trend={stats.win_rate >= 50 ? 'up' : 'down'}
+            trendValue={`${stats.winning_trades}W / ${stats.losing_trades}L`}
+            icon={<Percent size={16} />}
+          />
+          <StatCard
+            label="Profit Factor"
+            value={stats.profit_factor === Infinity ? '∞' : stats.profit_factor}
+            trend={stats.profit_factor >= 1.5 ? 'up' : stats.profit_factor >= 1 ? 'neutral' : 'down'}
+            trendValue={stats.profit_factor >= 1.5 ? 'Strong' : stats.profit_factor >= 1 ? 'Marginal' : 'Weak'}
+            icon={<Target size={16} />}
+          />
+          <StatCard
+            label="Sharpe Ratio"
+            value={stats.sharpe_ratio}
+            trend={stats.sharpe_ratio >= 1 ? 'up' : stats.sharpe_ratio >= 0 ? 'neutral' : 'down'}
+            icon={<BarChart3 size={16} />}
+          />
+          <StatCard
+            label="Total P&L"
+            value={stats.total_profit}
+            suffix="$"
+            trend={stats.total_profit >= 0 ? 'up' : 'down'}
+            icon={stats.total_profit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+          />
+          <StatCard
+            label="Max Drawdown"
+            value={stats.max_drawdown}
+            suffix="$"
+            trend="down"
+            icon={<TrendingDown size={16} />}
+          />
+          <StatCard
+            label="Avg Win"
+            value={stats.avg_profit}
+            suffix="$"
+            trend="up"
+          />
+          <StatCard
+            label="Avg Loss"
+            value={stats.avg_loss}
+            suffix="$"
+            trend="down"
+          />
         </div>
 
         {/* Avg Risk Input for R-multiple */}
         <div className="mb-6">
-          <Tooltip text="Rata-rata risk (dalam dollar/pips) per trade dari backtest. Digunakan untuk menormalisasi semua profit menjadi R-multiple (kelipatan risk). Default diambil dari avg loss backtest Anda.">
+          <Tooltip text="Nilai numerik pembagi profit per trade. Biasanya ini adalah rata-rata risk awal per trade saat melakukan backtest. Digunakan untuk menormalisasi semua profit menjadi R-multiple (kelipatan risk). Default diambil dari avg loss.">
             <label className="block text-xs font-semibold text-surface-300 mb-2 uppercase tracking-wider">
-              Average Risk per Trade ($)
+              Average Risk per Trade (R-Value Divisor)
             </label>
           </Tooltip>
           <div className="relative">
-            <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
+            <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
             <input
               type="number"
               value={avgRiskInput}
