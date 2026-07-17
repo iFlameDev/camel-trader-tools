@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { ResearchPage } from './pages/ResearchPage';
 import { ResearchDatabasePage } from './pages/ResearchDatabasePage';
+import { ResearchDataPage } from './pages/ResearchDataPage';
 import { MonitorPage } from './pages/MonitorPage';
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/research" element={<ResearchPage />} />
           <Route path="/research-database" element={<ResearchDatabasePage />} />
+          <Route path="/research-database/:methodId" element={<ResearchDataPage />} />
           <Route path="/monitor" element={<MonitorPage />} />
           <Route path="*" element={<Navigate to="/research" replace />} />
         </Route>

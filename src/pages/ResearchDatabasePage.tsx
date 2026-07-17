@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
   Database,
@@ -6,11 +7,13 @@ import {
   ChevronRight,
   Loader2,
   SearchX,
+  Eye,
 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
 interface DatabaseRow {
+  methodId: string;
   methodName: string;
   pair: string | null;
   timeframe: string | null;
@@ -20,6 +23,7 @@ interface DatabaseRow {
 }
 
 export const ResearchDatabasePage: React.FC = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<DatabaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -99,6 +103,7 @@ export const ResearchDatabasePage: React.FC = () => {
       const estTrades = bt ? mcMap.get(bt.id) ?? null : null;
 
       return {
+        methodId: m.id,
         methodName: m.name,
         pair: m.pair,
         timeframe: m.timeframe,
@@ -156,6 +161,8 @@ export const ResearchDatabasePage: React.FC = () => {
                     Monte Carlo
                   </span>
                 </th>
+                <th className="px-4 py-4 text-[11px] font-semibold text-surface-400 uppercase tracking-wider text-center">
+                </th>
               </tr>
               <tr className="border-b border-surface-800/60 bg-surface-900/40">
                 <th className="px-6 py-2.5 text-[10px] font-medium text-surface-500 uppercase tracking-wider">
@@ -176,12 +183,15 @@ export const ResearchDatabasePage: React.FC = () => {
                 <th className="px-6 py-2.5 text-[10px] font-medium text-surface-500 uppercase tracking-wider text-center">
                   Est. Trades to Win
                 </th>
+                <th className="px-4 py-2.5 text-[10px] font-medium text-surface-500 uppercase tracking-wider text-center">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3 text-surface-500">
                       <Loader2 size={28} className="animate-spin text-brand-400" />
                       <span className="text-sm">Loading data…</span>
@@ -190,7 +200,7 @@ export const ResearchDatabasePage: React.FC = () => {
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3 text-surface-500">
                       <SearchX size={36} className="text-surface-700" />
                       <span className="text-sm">No methods found in the database.</span>
@@ -261,6 +271,15 @@ export const ResearchDatabasePage: React.FC = () => {
                       ) : (
                         <span className="text-xs text-surface-600">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        onClick={() => navigate(`/research-database/${row.methodId}`)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        <Eye size={13} />
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))

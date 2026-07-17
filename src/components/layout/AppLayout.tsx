@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { FlaskConical, Activity, Database, Clock } from 'lucide-react';
+import { FlaskConical, Database, Clock } from 'lucide-react';
 
 const pageTitles: Record<string, { title: string; subtitle: string; icon: React.ReactNode }> = {
   '/research': {

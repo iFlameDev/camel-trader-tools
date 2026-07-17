@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FlaskConical, Activity, BarChart3, Menu, X, Database, Clock } from 'lucide-react';
+import { FlaskConical, BarChart3, Menu, X, Database, Clock } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
