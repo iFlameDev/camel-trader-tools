@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { FlaskConical, Database, Clock } from 'lucide-react';
+import { FlaskConical, Database, Clock, Brain } from 'lucide-react';
 
 const pageTitles: Record<string, { title: string; subtitle: string; icon: React.ReactNode }> = {
   '/research': {
@@ -18,6 +18,11 @@ const pageTitles: Record<string, { title: string; subtitle: string; icon: React.
     title: 'Upcoming Monitor',
     subtitle: 'Upcoming features to sync with MQL5 and monitor MetaTrader accounts',
     icon: <Clock size={20} />,
+  },
+  '/disc': {
+    title: 'DISC Psychology Calculator',
+    subtitle: 'Assess your behavioral traits and decision-making styles under market conditions',
+    icon: <Brain size={20} />,
   },
 };
 

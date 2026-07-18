@@ -101,3 +101,41 @@ CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON methods
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- 5. DISC RESULTS — Historical DISC personality profile results
+-- ============================================================
+CREATE TABLE IF NOT EXISTS disc_results (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  most_d INTEGER NOT NULL DEFAULT 0,
+  most_i INTEGER NOT NULL DEFAULT 0,
+  most_s INTEGER NOT NULL DEFAULT 0,
+  most_c INTEGER NOT NULL DEFAULT 0,
+  least_d INTEGER NOT NULL DEFAULT 0,
+  least_i INTEGER NOT NULL DEFAULT 0,
+  least_s INTEGER NOT NULL DEFAULT 0,
+  least_c INTEGER NOT NULL DEFAULT 0,
+  diff_d INTEGER NOT NULL DEFAULT 0,
+  diff_i INTEGER NOT NULL DEFAULT 0,
+  diff_s INTEGER NOT NULL DEFAULT 0,
+  diff_c INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Indexing for user lookups
+CREATE INDEX IF NOT EXISTS idx_disc_results_user ON disc_results(user_id);
+
+-- Enable RLS
+ALTER TABLE disc_results ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can insert their own DISC results" 
+  ON disc_results FOR INSERT 
+  TO authenticated 
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own DISC results" 
+  ON disc_results FOR SELECT 
+  TO authenticated 
+  USING (auth.uid() = user_id);

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ============================================================
    DESIGN SYSTEM — Camel Trader Dark Theme
@@ -182,9 +183,3 @@ body {
   initial-value: 0;
   inherits: false;
 }
-
-/* ============================================================
-   GOOGLE FONTS IMPORT
-   ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');

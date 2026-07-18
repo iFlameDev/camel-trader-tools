@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FlaskConical, BarChart3, Menu, X, Database, Clock } from 'lucide-react';
+import { FlaskConical, BarChart3, Menu, X, Database, Clock, Brain } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -33,6 +33,17 @@ const navGroups = [
         icon: Clock,
         label: 'Upcoming Monitor',
         description: 'Sync MQL5 accounts',
+      },
+    ]
+  },
+  {
+    title: 'Psychology',
+    items: [
+      {
+        to: '/disc',
+        icon: Brain,
+        label: 'DISC Calculator',
+        description: 'Personality profiling',
       },
     ]
   }
