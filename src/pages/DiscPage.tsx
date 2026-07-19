@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { supabase } from '../lib/supabase';
-import type { DiscCategory, Question, DiscResult, DiscScore } from '../types/disc';
+import type { DiscCategory, DiscResult, DiscScore } from '../types/disc';
 import { Brain, Check, X, ShieldAlert, Award, Save, RefreshCw, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 
 const QUESTIONS_PER_PAGE = 6;
